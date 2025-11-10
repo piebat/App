@@ -1,0 +1,14 @@
+[Unit]
+Description=Streamlit CER Application
+After=network.target
+
+[Service]
+Type=simple
+User=piebat
+WorkingDirectory=/home/piebat/App
+ExecStart=/home/piebat/App/.cer/bin/streamlit run app.py --server.port=8501 --server.address=0.0.0.0
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
