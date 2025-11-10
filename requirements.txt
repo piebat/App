@@ -3,3 +3,6 @@ geopandas
 folium
 streamlit-folium
 pandas
+google-analytics-data
+plotly
+openpyxl

@@ -4,6 +4,7 @@ import folium
 from streamlit_folium import st_folium
 import pandas as pd
 from shapely.geometry import Point
+import streamlit.components.v1 as components
 
 # Configurazione pagina
 st.set_page_config(
@@ -12,6 +13,36 @@ st.set_page_config(
     page_icon="⚡",
     initial_sidebar_state="collapsed"
 )
+
+# Google Analytics Tracking Code
+# Crea un file ga_config.json con il tuo Measurement ID: {"ga_measurement_id": "G-XXXXXXXXXX"}
+import json
+import os
+
+GA_CONFIG_FILE = "ga_config.json"
+
+def load_ga_config():
+    if os.path.exists(GA_CONFIG_FILE):
+        with open(GA_CONFIG_FILE, 'r') as f:
+            return json.load(f)
+    return {"ga_measurement_id": ""}
+
+ga_config = load_ga_config()
+GA_MEASUREMENT_ID = ga_config.get("ga_measurement_id", "")
+
+# Inserisci Google Analytics se configurato
+if GA_MEASUREMENT_ID:
+    ga_code = f"""
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){{dataLayer.push(arguments);}}
+      gtag('js', new Date());
+      gtag('config', '{GA_MEASUREMENT_ID}');
+    </script>
+    """
+    components.html(ga_code, height=0)
 
 # Custom CSS per migliorare l'aspetto
 st.markdown("""

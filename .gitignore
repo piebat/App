@@ -1,0 +1,86 @@
+# Google Analytics Credentials
+google_analytics_credentials.json
+ga_config.json
+
+# Admin Password
+admin_password.json
+
+# Configuration Files with Sensitive Data
+config_fields.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.cer/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Streamlit
+.streamlit/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+temp.xlsx
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Environment variables
+.env
+.env.local
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Data files (optional - uncomment if you don't want to track data)
+# *.csv
+# *.shp
+# *.dbf
+# *.shx
+# *.prj
+# *.cpg
+# *.qmd
+# *.qml

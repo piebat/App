@@ -1,0 +1,14 @@
+[Unit]
+Description=Streamlit Analytics Dashboard
+After=network.target
+
+[Service]
+Type=simple
+User=piebat
+WorkingDirectory=/home/piebat/App
+ExecStart=/home/piebat/App/.cer/bin/streamlit run analytics_dashboard.py --server.port=8502 --server.address=0.0.0.0
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
