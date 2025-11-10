@@ -494,26 +494,26 @@ try:
         # Mostra anche la tabella del terzo shapefile
         if show_table:
             st.divider()
-            st.markdown("### 📋 Features Table")
-            if len(shape3) > 0:
-                # Mostra solo le colonne selezionate se configurate
-                if selected_fields_shape3:
-                    cols_to_show = [col for col in selected_fields_shape3 if col in shape3.columns]
-                    df_display = shape3[cols_to_show]
+            with st.expander("📋 Features Table", expanded=False):
+                if len(shape3) > 0:
+                    # Mostra solo le colonne selezionate se configurate
+                    if selected_fields_shape3:
+                        cols_to_show = [col for col in selected_fields_shape3 if col in shape3.columns]
+                        df_display = shape3[cols_to_show]
+                    else:
+                        df_display = shape3.drop(columns=['geometry'])
+                    
+                    st.dataframe(
+                        df_display, 
+                        height=300,
+                        use_container_width=True,
+                        hide_index=True
+                    )
+                    
+                    # Mostra info su quante colonne sono visualizzate
+                    st.caption(f"📊 Visualizzate {len(df_display.columns)} colonne su {len(shape3.columns)-1} disponibili")
                 else:
-                    df_display = shape3.drop(columns=['geometry'])
-                
-                st.dataframe(
-                    df_display, 
-                    height=300,
-                    use_container_width=True,
-                    hide_index=True
-                )
-                
-                # Mostra info su quante colonne sono visualizzate
-                st.caption(f"📊 Visualizzate {len(df_display.columns)} colonne su {len(shape3.columns)-1} disponibili")
-            else:
-                st.warning("⚠️ No features found")
+                    st.warning("⚠️ No features found")
     
 except Exception as e:
     st.error(f"❌ Error loading shapefiles: {str(e)}")
