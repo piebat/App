@@ -1,0 +1,22 @@
+{
+  "shape1": [
+    "ID_Edifici",
+    "ID_Cer",
+    "Num_Pannel",
+    "Potenza_Pi"
+  ],
+  "shape2": [
+    "fid",
+    "ID_Edifici",
+    "ID_Cer",
+    "iterazione",
+    "Num_Pannel"
+  ],
+  "shape3": [
+    "ID_Cer",
+    "D_an_CER",
+    "O_an_CER",
+    "AD_an_CER",
+    "Sto_an_CER"
+  ]
+}

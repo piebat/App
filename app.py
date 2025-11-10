@@ -75,6 +75,122 @@ st.markdown("""
 st.markdown('<h1 class="main-title">⚡ Renewable Energy Communities</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">Monitoring, Optimization and Planning</p>', unsafe_allow_html=True)
 
+# Sidebar per configurazione
+with st.sidebar:
+    st.markdown("## ⚙️ Configurazione")
+    st.markdown("---")
+    
+    # File di configurazione per salvare le preferenze e password
+    import json
+    import os
+    import hashlib
+    
+    CONFIG_FILE = "config_fields.json"
+    PASSWORD_FILE = "admin_password.json"
+    
+    # Funzione per hash della password
+    def hash_password(password):
+        return hashlib.sha256(password.encode()).hexdigest()
+    
+    # Funzione per caricare/creare password admin
+    def load_admin_password():
+        if os.path.exists(PASSWORD_FILE):
+            with open(PASSWORD_FILE, 'r') as f:
+                return json.load(f).get('password_hash')
+        else:
+            # Password di default: "admin123" - Cambiarla al primo accesso!
+            default_hash = hash_password("admin123")
+            with open(PASSWORD_FILE, 'w') as f:
+                json.dump({'password_hash': default_hash}, f)
+            return default_hash
+    
+    # Funzione per salvare nuova password
+    def save_admin_password(password):
+        with open(PASSWORD_FILE, 'w') as f:
+            json.dump({'password_hash': hash_password(password)}, f)
+    
+    # Funzione per caricare la configurazione
+    def load_config():
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r') as f:
+                return json.load(f)
+        return {}
+    
+    # Funzione per salvare la configurazione
+    def save_config(config):
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(config, f, indent=2)
+    
+    # Inizializza session state per autenticazione
+    if 'admin_authenticated' not in st.session_state:
+        st.session_state.admin_authenticated = False
+    if 'show_config' not in st.session_state:
+        st.session_state.show_config = False
+    
+    # Carica password admin e configurazione
+    admin_password_hash = load_admin_password()
+    config = load_config()
+    
+    # Area di autenticazione
+    st.markdown("### 🔐 Accesso Amministratore")
+    
+    if not st.session_state.admin_authenticated:
+        with st.form("admin_login"):
+            password_input = st.text_input("Password:", type="password", key="login_password")
+            col_login, col_info = st.columns([2, 1])
+            with col_login:
+                login_submitted = st.form_submit_button("🔓 Accedi", use_container_width=True)
+            # with col_info:
+            #     st.caption("Default: admin123")
+            
+            if login_submitted:
+                if hash_password(password_input) == admin_password_hash:
+                    st.session_state.admin_authenticated = True
+                    st.session_state.show_config = True
+                    st.success("✅ Accesso consentito!")
+                    st.rerun()
+                else:
+                    st.error("❌ Password errata!")
+    else:
+        st.success("✅ Autenticato come Amministratore")
+        
+        col_logout, col_change_pwd = st.columns(2)
+        with col_logout:
+            if st.button("🔒 Logout", use_container_width=True):
+                st.session_state.admin_authenticated = False
+                st.session_state.show_config = False
+                st.rerun()
+        with col_change_pwd:
+            if st.button("🔑 Cambia Password", use_container_width=True):
+                st.session_state.show_change_password = True
+        
+        # Form per cambiare password
+        if st.session_state.get('show_change_password', False):
+            st.markdown("---")
+            st.markdown("#### 🔑 Cambia Password")
+            with st.form("change_password"):
+                old_pwd = st.text_input("Password attuale:", type="password")
+                new_pwd = st.text_input("Nuova password:", type="password")
+                confirm_pwd = st.text_input("Conferma nuova password:", type="password")
+                
+                if st.form_submit_button("💾 Salva Nuova Password"):
+                    if hash_password(old_pwd) != admin_password_hash:
+                        st.error("❌ Password attuale errata!")
+                    elif new_pwd != confirm_pwd:
+                        st.error("❌ Le password non corrispondono!")
+                    elif len(new_pwd) < 6:
+                        st.error("❌ La password deve essere lunga almeno 6 caratteri!")
+                    else:
+                        save_admin_password(new_pwd)
+                        st.success("✅ Password cambiata con successo!")
+                        st.session_state.show_change_password = False
+                        st.rerun()
+        
+        st.markdown("---")
+    
+    st.markdown("### 📋 Campi da Visualizzare")
+    st.caption("Seleziona i campi da mostrare nei dettagli delle feature")
+
 # Caricamento degli shapefile
 @st.cache_data
 def load_shapefiles():
@@ -113,6 +229,76 @@ try:
     shape2 = shape2.to_crs(epsg=4326)
     shape3 = shape3.to_crs(epsg=4326)
     
+    # Configurazione campi nella sidebar
+    with st.sidebar:
+        # Ottieni tutti i campi disponibili (escludi geometry)
+        all_fields_shape1 = [col for col in shape1.columns if col != 'geometry']
+        all_fields_shape2 = [col for col in shape2.columns if col != 'geometry']
+        all_fields_shape3 = [col for col in shape3.columns if col != 'geometry']
+        
+        # Mostra i controlli solo se autenticato
+        if st.session_state.admin_authenticated:
+            st.markdown("---")
+            
+            # Configurazione per ogni layer
+            st.markdown("#### 🔵 Autosufficienza Energetica")
+            selected_fields_shape1 = st.multiselect(
+                "Campi da visualizzare:",
+                options=all_fields_shape1,
+                default=config.get('shape1', all_fields_shape1[:5] if len(all_fields_shape1) > 5 else all_fields_shape1),
+                key="fields_shape1",
+                disabled=False
+            )
+            
+            st.markdown("#### 🟢 Report Ind 0.5")
+            selected_fields_shape2 = st.multiselect(
+                "Campi da visualizzare:",
+                options=all_fields_shape2,
+                default=config.get('shape2', all_fields_shape2[:5] if len(all_fields_shape2) > 5 else all_fields_shape2),
+                key="fields_shape2",
+                disabled=False
+            )
+            
+            st.markdown("#### 🔴 Shape da Interrogare")
+            selected_fields_shape3 = st.multiselect(
+                "Campi da visualizzare:",
+                options=all_fields_shape3,
+                default=config.get('shape3', all_fields_shape3[:5] if len(all_fields_shape3) > 5 else all_fields_shape3),
+                key="fields_shape3",
+                disabled=False
+            )
+            
+            # Pulsante per salvare la configurazione
+            if st.button("💾 Salva Configurazione", use_container_width=True):
+                new_config = {
+                    'shape1': selected_fields_shape1,
+                    'shape2': selected_fields_shape2,
+                    'shape3': selected_fields_shape3
+                }
+                save_config(new_config)
+                st.success("✅ Configurazione salvata!")
+            
+            st.markdown("---")
+            st.markdown("### 🎨 Opzioni Visualizzazione")
+            
+            show_all_in_popup = st.checkbox("Mostra tutti i campi nei popup", value=True)
+            show_table = st.checkbox("Mostra tabella completa", value=True)
+        else:
+            # Se non autenticato, usa la configurazione salvata (sola lettura)
+            st.info("🔒 Accedi come amministratore per modificare la configurazione")
+            selected_fields_shape1 = config.get('shape1', all_fields_shape1[:5] if len(all_fields_shape1) > 5 else all_fields_shape1)
+            selected_fields_shape2 = config.get('shape2', all_fields_shape2[:5] if len(all_fields_shape2) > 5 else all_fields_shape2)
+            selected_fields_shape3 = config.get('shape3', all_fields_shape3[:5] if len(all_fields_shape3) > 5 else all_fields_shape3)
+            show_all_in_popup = True
+            show_table = True
+            
+            # Mostra configurazione attuale
+            st.markdown("---")
+            st.markdown("### 📊 Configurazione Attuale")
+            st.caption(f"🔵 Autosufficienza: {len(selected_fields_shape1)} campi")
+            st.caption(f"🟢 Report Ind 0.5: {len(selected_fields_shape2)} campi")
+            st.caption(f"🔴 Da Interrogare: {len(selected_fields_shape3)} campi")
+    
     # Metrics row
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -142,14 +328,14 @@ try:
         m = folium.Map(
             location=[center_lat, center_lon],
             zoom_start=11,
-            tiles='CartoDB positron',
+            tiles='OpenStreetMap',
             control_scale=True
         )
         
-        # Aggiungi layer OpenStreetMap
+        # Aggiungi layer CartoDB Positron
         folium.TileLayer(
-            tiles='OpenStreetMap',
-            name='Street Map',
+            tiles='CartoDB positron',
+            name='CartoDB Positron',
             overlay=False,
             control=True
         ).add_to(m)
@@ -202,11 +388,14 @@ try:
                 # Ottieni le coordinate del centroide per il marker
                 centroid = row.geometry.centroid
                 
-                # Crea popup con informazioni stilizzate
+                # Crea popup con informazioni stilizzate - usa i campi configurati o tutti
                 popup_html = '<div style="font-family: Arial; min-width: 200px;">'
                 popup_html += '<h4 style="color: #dc2626; margin-bottom: 10px;">📍 Feature Info</h4>'
-                for col in shape3.columns:
-                    if col != 'geometry':
+                
+                fields_to_show = selected_fields_shape3 if selected_fields_shape3 and not show_all_in_popup else [col for col in shape3.columns if col != 'geometry']
+                
+                for col in fields_to_show:
+                    if col in row.index and col != 'geometry':
                         popup_html += f'<p style="margin: 5px 0;"><b>{col}:</b> {row[col]}</p>'
                 popup_html += '</div>'
                 
@@ -267,10 +456,11 @@ try:
                 selected_data = None
                 selected_layer_name = None
                 layer_color = None
+                selected_fields = None
                 
-                for shape, name, color in [(shape1, "Autosufficienza Energetica", "🔵"), 
-                                           (shape2, "Report Ind 0.5", "🟢"), 
-                                           (shape3, "Shape da Interrogare", "🔴")]:
+                for shape, name, color, fields in [(shape1, "Autosufficienza Energetica", "🔵", selected_fields_shape1), 
+                                                    (shape2, "Report Ind 0.5", "🟢", selected_fields_shape2), 
+                                                    (shape3, "Shape da Interrogare", "🔴", selected_fields_shape3)]:
                     for idx, row in shape.iterrows():
                         dist = row.geometry.distance(clicked_point)
                         if dist < min_dist:
@@ -278,17 +468,22 @@ try:
                             selected_data = row
                             selected_layer_name = name
                             layer_color = color
+                            selected_fields = fields
                 
                 if selected_data is not None and min_dist < 0.01:  # Soglia di distanza
                     st.markdown(f"#### {layer_color} {selected_layer_name}")
                     st.divider()
                     
-                    # Mostra tutti i campi tranne la geometria in un formato migliore
-                    for col in selected_data.index:
-                        if col != 'geometry':
-                            st.markdown(f"**{col}:**")
-                            st.write(selected_data[col])
-                            st.markdown("---")
+                    # Mostra solo i campi configurati
+                    if selected_fields:
+                        for col in selected_fields:
+                            if col in selected_data.index and col != 'geometry':
+                                st.markdown(f"**{col}:**")
+                                st.write(selected_data[col])
+                                st.markdown("---")
+                    else:
+                        st.warning("⚠️ Nessun campo selezionato per la visualizzazione")
+                        st.caption("Usa la sidebar per selezionare i campi da visualizzare")
                 else:
                     st.info("👆 Click on a feature on the map to view details")
             else:
@@ -297,18 +492,28 @@ try:
             st.info("👆 Click on a feature on the map to view details")
             
         # Mostra anche la tabella del terzo shapefile
-        st.divider()
-        st.markdown("### 📋 Features Table")
-        if len(shape3) > 0:
-            df_display = shape3.drop(columns=['geometry'])
-            st.dataframe(
-                df_display, 
-                height=300,
-                use_container_width=True,
-                hide_index=True
-            )
-        else:
-            st.warning("⚠️ No features found")
+        if show_table:
+            st.divider()
+            st.markdown("### 📋 Features Table")
+            if len(shape3) > 0:
+                # Mostra solo le colonne selezionate se configurate
+                if selected_fields_shape3:
+                    cols_to_show = [col for col in selected_fields_shape3 if col in shape3.columns]
+                    df_display = shape3[cols_to_show]
+                else:
+                    df_display = shape3.drop(columns=['geometry'])
+                
+                st.dataframe(
+                    df_display, 
+                    height=300,
+                    use_container_width=True,
+                    hide_index=True
+                )
+                
+                # Mostra info su quante colonne sono visualizzate
+                st.caption(f"📊 Visualizzate {len(df_display.columns)} colonne su {len(shape3.columns)-1} disponibili")
+            else:
+                st.warning("⚠️ No features found")
     
 except Exception as e:
     st.error(f"❌ Error loading shapefiles: {str(e)}")
