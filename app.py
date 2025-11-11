@@ -57,7 +57,7 @@ st.markdown("""
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
     .sub-title {
-        font-size: 1.5rem;
+        font-size: 2rem;
         color: #059669;
         text-align: center;
         margin-bottom: 2rem;
@@ -103,8 +103,19 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Titolo con styling personalizzato
-st.markdown('<h1 class="main-title">⚡ Renewable Energy Communities</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">Monitoring, Optimization and Planning</p>', unsafe_allow_html=True)
+# Configurazione pagina
+st.set_page_config(
+    layout="wide", 
+    page_title="REC Monitoring & Planning",
+    page_icon="⚡",
+    initial_sidebar_state="collapsed"
+)
+
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    st.image("logo.png", width=400, use_container_width=True)
+    st.markdown('<h1 class="main-title">Renewable Energy Communities</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-title">Monitoring, Optimization and Planning</p>', unsafe_allow_html=True)
 
 # Sidebar per configurazione
 with st.sidebar:
@@ -272,7 +283,7 @@ try:
             st.markdown("---")
             
             # Configurazione per ogni layer
-            st.markdown("#### 🔵 Autosufficienza Energetica")
+            st.markdown("#### 🔵 Comunità Energetiche Rinnovabili")
             selected_fields_shape1 = st.multiselect(
                 "Campi da visualizzare:",
                 options=all_fields_shape1,
@@ -281,7 +292,7 @@ try:
                 disabled=False
             )
             
-            st.markdown("#### 🟢 Report Ind 0.5")
+            st.markdown("#### 🟢 Edifici")
             selected_fields_shape2 = st.multiselect(
                 "Campi da visualizzare:",
                 options=all_fields_shape2,
@@ -296,7 +307,7 @@ try:
                 options=all_fields_shape3,
                 default=config.get('shape3', all_fields_shape3[:5] if len(all_fields_shape3) > 5 else all_fields_shape3),
                 key="fields_shape3",
-                disabled=False
+                disabled=True
             )
             
             # Pulsante per salvare la configurazione
@@ -326,20 +337,85 @@ try:
             # Mostra configurazione attuale
             st.markdown("---")
             st.markdown("### 📊 Configurazione Attuale")
-            st.caption(f"🔵 Autosufficienza: {len(selected_fields_shape1)} campi")
-            st.caption(f"🟢 Report Ind 0.5: {len(selected_fields_shape2)} campi")
-            st.caption(f"🔴 Da Interrogare: {len(selected_fields_shape3)} campi")
-    
+            st.caption(f"🔵 Numero di elementi per Comunità Energetiche Rinnovabili: {len(selected_fields_shape1)} campi")
+            st.caption(f"🟢 Numero di elementi per Edifici: {len(selected_fields_shape2)} campi")
+            st.caption(f"🔴 Numero di elementi Interrogabili: {len(selected_fields_shape3)} campi")
+
     # Metrics row
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("🔵 Autosufficienza", len(shape1), help="Numero di features nel layer Autosufficienza Energetica")
+        st.metric("🔵 Comunità Energetiche Rinnovabili", len(shape1), help="Numero di features nel layer Comunità Energetiche Rinnovabili")
     with col2:
-        st.metric("🟢 Report Ind 0.5", len(shape2), help="Numero di features nel layer Report")
+        st.metric("🟢 Edifici", len(shape2), help="Numero di features nel layer Report")
     with col3:
-        st.metric("🔴 Da Interrogare", len(shape3), help="Numero di features nel layer Shape da Interrogare")
+        st.metric("🔴 Elementi Interrogabili", len(shape3), help="Numero di features nel layer Shape da Interrogare")
     with col4:
-        st.metric("📊 Totale Features", len(shape1) + len(shape2) + len(shape3))
+        st.metric("📊 Totale Elementi", len(shape1) + len(shape2) + len(shape3))
+    
+    st.markdown("---")
+    
+    # Campo ricerca indirizzo
+    st.markdown("### 🔍 Cerca Indirizzo")
+    col_search, col_button = st.columns([3, 1])
+    
+    with col_search:
+        address_input = st.text_input(
+            "Inserisci un indirizzo per centrare la mappa:",
+            placeholder="es. Via Roma 1, Milano, Italia",
+            label_visibility="collapsed"
+        )
+    
+    with col_button:
+        search_button = st.button("🔎 Cerca", use_container_width=True)
+    
+    # Funzione per geocodificare l'indirizzo usando Nominatim (OpenStreetMap)
+    def geocode_address(address):
+        """Geocodifica un indirizzo usando Nominatim (servizio gratuito OpenStreetMap)"""
+        try:
+            from geopy.geocoders import Nominatim
+            from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+            
+            # Inizializza geocoder con user agent
+            geolocator = Nominatim(user_agent="rec_monitoring_app")
+            
+            # Geocodifica l'indirizzo
+            location = geolocator.geocode(address, timeout=10)
+            
+            if location:
+                return location.latitude, location.longitude, location.address
+            else:
+                return None, None, None
+                
+        except (GeocoderTimedOut, GeocoderServiceError) as e:
+            st.error(f"Errore nel servizio di geocodifica: {str(e)}")
+            return None, None, None
+        except ImportError:
+            st.error("Libreria geopy non installata. Esegui: pip install geopy")
+            return None, None, None
+        except Exception as e:
+            st.error(f"Errore: {str(e)}")
+            return None, None, None
+    
+    # Inizializza session state per coordinate personalizzate
+    if 'custom_center' not in st.session_state:
+        st.session_state.custom_center = None
+    
+    # Gestisci la ricerca
+    if search_button and address_input:
+        with st.spinner("🌍 Ricerca indirizzo in corso..."):
+            lat, lon, full_address = geocode_address(address_input)
+            
+            if lat and lon:
+                st.session_state.custom_center = (lat, lon)
+                st.success(f"✅ Trovato: {full_address}")
+            else:
+                st.warning("⚠️ Indirizzo non trovato. Prova a essere più specifico.")
+    
+    # Pulsante per resettare la vista
+    if st.session_state.custom_center:
+        if st.button("🔄 Ripristina Vista Originale"):
+            st.session_state.custom_center = None
+            st.rerun()
     
     st.markdown("---")
     
@@ -347,21 +423,36 @@ try:
     col_map, col_data = st.columns([3, 1], gap="large")
     
     with col_map:
-        st.markdown("### 🗺️ Interactive Map")
+        st.markdown("### 🗺️ Mappa Interattiva")
         
-        # Creazione della mappa Folium
-        # Calcola il centro della mappa basandosi sul terzo shapefile
+        # Calcola il centro della mappa
         bounds = shape3.total_bounds
-        center_lat = (bounds[1] + bounds[3]) / 2
-        center_lon = (bounds[0] + bounds[2]) / 2
+        
+        # Usa centro personalizzato se disponibile, altrimenti usa bounds dello shapefile
+        if st.session_state.custom_center:
+            center_lat, center_lon = st.session_state.custom_center
+            zoom_level = 15  # Zoom più vicino per indirizzo specifico
+        else:
+            center_lat = (bounds[1] + bounds[3]) / 2
+            center_lon = (bounds[0] + bounds[2]) / 2
+            zoom_level = 11  # Zoom default
         
         # Crea la mappa con stile migliorato
         m = folium.Map(
             location=[center_lat, center_lon],
-            zoom_start=11,
+            zoom_start=zoom_level,
             tiles='OpenStreetMap',
             control_scale=True
         )
+        
+        # Se c'è un centro personalizzato, aggiungi un marker
+        if st.session_state.custom_center:
+            folium.Marker(
+                location=[center_lat, center_lon],
+                popup=folium.Popup(f"<b>📍 Posizione Cercata</b><br>{address_input}", max_width=250),
+                tooltip="Posizione cercata",
+                icon=folium.Icon(color='red', icon='info-sign')
+            ).add_to(m)
         
         # Aggiungi layer CartoDB Positron
         folium.TileLayer(
@@ -384,7 +475,7 @@ try:
         if len(shape1) > 0:
             folium.GeoJson(
                 shape1,
-                name='🔵 Autosufficienza Energetica',
+                name='🔵 Comunità Energetiche Rinnovabili',
                 style_function=lambda x: {
                     'fillColor': '#3b82f6',
                     'color': '#1e40af',
@@ -399,7 +490,7 @@ try:
         if len(shape2) > 0:
             folium.GeoJson(
                 shape2,
-                name='🟢 Report Ind 0.5',
+                name='🟢 Edifici',
                 style_function=lambda x: {
                     'fillColor': '#10b981',
                     'color': '#059669',
@@ -413,7 +504,7 @@ try:
         # Aggiungi il terzo shapefile (shape da interrogare) con markers migliorati
         if len(shape3) > 0:
             # Crea un feature group per i markers
-            marker_cluster = folium.FeatureGroup(name='🔴 Shape da Interrogare')
+            marker_cluster = folium.FeatureGroup(name='🔴 Connessioni')
             
             for idx, row in shape3.iterrows():
                 # Ottieni le coordinate del centroide per il marker
@@ -462,14 +553,15 @@ try:
         from folium.plugins import Fullscreen
         Fullscreen(position='topleft').add_to(m)
         
-        # Adatta i bounds della mappa
-        m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
+        # Adatta i bounds della mappa solo se non c'è un centro personalizzato
+        if not st.session_state.custom_center:
+            m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
         
         # Visualizza la mappa con interattività
         map_data = st_folium(m, width=None, height=650, returned_objects=["last_object_clicked"])
     
     with col_data:
-        st.markdown("### 📊 Feature Details")
+        st.markdown("### 📊 Dettagli")
         
         # Mostra i dati basati sul click sulla mappa
         if map_data and map_data.get('last_object_clicked'):
@@ -489,8 +581,8 @@ try:
                 layer_color = None
                 selected_fields = None
                 
-                for shape, name, color, fields in [(shape1, "Autosufficienza Energetica", "🔵", selected_fields_shape1), 
-                                                    (shape2, "Report Ind 0.5", "🟢", selected_fields_shape2), 
+                for shape, name, color, fields in [(shape1, "Comunità Energetiche Rinnovabili", "🔵", selected_fields_shape1), 
+                                                    (shape2, "Edifici", "🟢", selected_fields_shape2), 
                                                     (shape3, "Shape da Interrogare", "🔴", selected_fields_shape3)]:
                     for idx, row in shape.iterrows():
                         dist = row.geometry.distance(clicked_point)
@@ -525,7 +617,7 @@ try:
         # Mostra anche la tabella del terzo shapefile
         if show_table:
             st.divider()
-            with st.expander("📋 Features Table", expanded=False):
+            with st.expander("📋  Tabella Elementi", expanded=False):
                 if len(shape3) > 0:
                     # Mostra solo le colonne selezionate se configurate
                     if selected_fields_shape3:
@@ -552,7 +644,7 @@ except Exception as e:
 
 # Footer con banner loghi e info
 st.markdown("---")
-st.markdown("### 🏛️ Project Partners")
+# st.markdown("### 🏛️ Finanziamento")
 try:
     st.image("loghi.png", use_container_width=True)
 except Exception as e:
@@ -561,10 +653,10 @@ except Exception as e:
 # Info footer
 col_f1, col_f2, col_f3 = st.columns(3)
 with col_f1:
-    st.markdown("**📍 Location**")
+    st.markdown("**📍 Progetto**")
     st.caption("Renewable Energy Communities")
 with col_f2:
-    st.markdown("**📅 Last Updated**")
+    st.markdown("**📅 Ultimo Aggiornamento**")
     st.caption("November 2025")
 with col_f3:
     st.markdown("**🔄 Version**")
