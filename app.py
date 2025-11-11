@@ -44,12 +44,25 @@ if GA_MEASUREMENT_ID:
     """
     components.html(ga_code, height=0)
 
-# Custom CSS per migliorare l'aspetto
+# Custom CSS per migliorare l'aspetto - Dark Theme
 st.markdown("""
     <style>
+    /* Dark theme background */
+    .stApp {
+        background-color: #0f172a;
+        color: #e2e8f0;
+        font-size: 18px;
+    }
+    
+    /* Main content area */
+    .main .block-container {
+        background-color: #0f172a;
+        padding-top: 2rem;
+    }
+    
     /* Header styling */
     .main-title {
-        font-size: 2.5rem;
+        font-size: 3rem;
         font-weight: 700;
         color: #1e3a8a;
         text-align: center;
@@ -57,17 +70,34 @@ st.markdown("""
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
     }
     .sub-title {
-        font-size: 2rem;
-        color: #059669;
+        font-size: 2.5rem;
+        color: #BF4904;
         text-align: center;
         margin-bottom: 2rem;
         font-weight: 500;
     }
     
+    /* Text colors for dark theme */
+    .stMarkdown, p, span, label {
+        color: #e2e8f0 !important;
+        font-size: 18px;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: rgb(208, 120, 58) !important;
+    }
+    
+    h1 { font-size: 3rem; }
+    h2 { font-size: 2.5rem; }
+    h3 { font-size: 2rem; }
+    h4 { font-size: 1.75rem; }
+    
     /* Card styling for data panel */
     .stDataFrame {
         border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        background-color: #1e293b;
+        font-size: 16px;
     }
     
     /* Info boxes */
@@ -77,13 +107,14 @@ st.markdown("""
         border-radius: 10px;
         color: white;
         margin: 1rem 0;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        font-size: 18px;
     }
     
     /* Map container */
     .element-container iframe {
         border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     }
     
     /* Improve dividers */
@@ -91,31 +122,134 @@ st.markdown("""
         margin: 2rem 0;
         border: none;
         height: 2px;
-        background: linear-gradient(to right, transparent, #667eea, transparent);
+        background: linear-gradient(to right, transparent, #475569, transparent);
     }
     
     /* Better metric display */
     [data-testid="stMetricValue"] {
-        font-size: 2rem;
-        color: #1e3a8a;
+        font-size: 2.5rem;
+        color: #60a5fa !important;
+    }
+    
+    [data-testid="stMetricLabel"] {
+        color: #cbd5e1 !important;
+        font-size: 18px;
+    }
+    
+    /* Sidebar dark theme */
+    [data-testid="stSidebar"] {
+        background-color: #1e293b;
+        font-size: 18px;
+    }
+    
+    [data-testid="stSidebar"] .stMarkdown {
+        color: #e2e8f0 !important;
+        font-size: 18px;
+    }
+    
+    /* Input fields dark theme */
+    .stTextInput input {
+        background-color: #1e293b;
+        color: #e2e8f0;
+        border: 1px solid #475569;
+        font-size: 18px;
+    }
+    
+    .stTextInput input:focus {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 1px #60a5fa;
+    }
+    
+    /* Buttons dark theme */
+    .stButton button {
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        font-size: 18px;
+    }
+    
+    .stButton button:hover {
+        background-color: #2563eb;
+    }
+    
+    /* Form submit button styling */
+    .stFormSubmitButton button {
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        font-size: 18px;
+    }
+    
+    .stFormSubmitButton button:hover {
+        background-color: #2563eb;
+    }
+    
+    /* Banner header styling - WHITE */
+    .header-banner {
+        background: #F2F2F2; /*linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);*/
+        padding: 2rem 1rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        text-align: center;
+        border: 1px solid #e2e8f0;
+    }
+    .banner-title {
+        color: #CE783A !important;
+        font-size: 3.5rem !important;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    .banner-subtitle {
+        color: #EA532A !important;
+        font-size: 2rem !important;
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }
+    .banner-logo {
+        max-width: 300px;
+        height: auto;
+        margin-bottom: 1rem;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2));
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Titolo con styling personalizzato
-# Configurazione pagina
-st.set_page_config(
-    layout="wide", 
-    page_title="REC Monitoring & Planning",
-    page_icon="⚡",
-    initial_sidebar_state="collapsed"
-)
-
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.image("logo.png", width=400, use_container_width=True)
-    st.markdown('<h1 class="main-title">Renewable Energy Communities</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-title">Monitoring, Optimization and Planning</p>', unsafe_allow_html=True)
+# Banner Header con Logo
+try:
+    # Prova a caricare il logo
+    import base64
+    
+    if os.path.exists("logo.png"):
+        with open("logo.png", "rb") as f:
+            logo_data = base64.b64encode(f.read()).decode()
+        
+        st.markdown(f"""
+            <div class="header-banner">
+                <img src="data:image/png;base64,{logo_data}" class="banner-logo" alt="Logo">
+                <h1 class="banner-title">Renewable Energy Communities</h1>
+                <p class="banner-subtitle">Monitoring, Optimization and Planning</p>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        # Fallback se il logo non esiste
+        st.markdown("""
+            <div class="header-banner">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">⚡</div>
+                <h1 class="banner-title">Renewable Energy Communities</h1>
+                <p class="banner-subtitle">Monitoring, Optimization and Planning</p>
+            </div>
+        """, unsafe_allow_html=True)
+except Exception as e:
+    # Fallback in caso di errore
+    st.markdown("""
+        <div class="header-banner">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">⚡</div>
+            <h1 class="banner-title">Renewable Energy Communities</h1>
+            <p class="banner-subtitle">Monitoring, Optimization and Planning</p>
+        </div>
+    """, unsafe_allow_html=True)
 
 # Sidebar per configurazione
 with st.sidebar:
@@ -301,7 +435,7 @@ try:
                 disabled=False
             )
             
-            st.markdown("#### 🔴 Shape da Interrogare")
+            st.markdown("#### 🔴 Connessioni")
             selected_fields_shape3 = st.multiselect(
                 "Campi da visualizzare:",
                 options=all_fields_shape3,
@@ -356,17 +490,21 @@ try:
     
     # Campo ricerca indirizzo
     st.markdown("### 🔍 Cerca Indirizzo")
-    col_search, col_button = st.columns([3, 1])
     
-    with col_search:
-        address_input = st.text_input(
-            "Inserisci un indirizzo per centrare la mappa:",
-            placeholder="es. Via Roma 1, Milano, Italia",
-            label_visibility="collapsed"
-        )
-    
-    with col_button:
-        search_button = st.button("🔎 Cerca", use_container_width=True)
+    # Usa un form per permettere la ricerca con Enter
+    with st.form("address_search_form", clear_on_submit=False):
+        col_search, col_button = st.columns([3, 1])
+        
+        with col_search:
+            address_input = st.text_input(
+                "Inserisci un indirizzo per centrare la mappa:",
+                placeholder="es. Via Roma 1, Milano, Italia",
+                label_visibility="collapsed",
+                key="address_input_field"
+            )
+        
+        with col_button:
+            search_button = st.form_submit_button("🔎 Cerca", use_container_width=True)
     
     # Funzione per geocodificare l'indirizzo usando Nominatim (OpenStreetMap)
     def geocode_address(address):
@@ -583,7 +721,7 @@ try:
                 
                 for shape, name, color, fields in [(shape1, "Comunità Energetiche Rinnovabili", "🔵", selected_fields_shape1), 
                                                     (shape2, "Edifici", "🟢", selected_fields_shape2), 
-                                                    (shape3, "Shape da Interrogare", "🔴", selected_fields_shape3)]:
+                                                    (shape3, "Connessioni", "🔴", selected_fields_shape3)]:
                     for idx, row in shape.iterrows():
                         dist = row.geometry.distance(clicked_point)
                         if dist < min_dist:
